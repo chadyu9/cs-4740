@@ -11,6 +11,7 @@ import numpy as np
 
 ## ================ Helper functions for loading data ==========================
 
+
 def unzip_file(zip_filepath, dest_path):
     """
     Returns boolean indication of whether the file was successfully unzipped.
@@ -95,15 +96,17 @@ def load_dataset(data_zip_path, dest_path):
     test_data = read_json(os.path.join(dest_path, "test.json"))
     return training_data, validation_data, test_data
 
+
 ## =============================================================================
 
 ################################################################################
 # NOTE: Do NOT change any of the function headers and/or specs!
-# The input(s) and output must perfectly match the specs, or else your 
+# The input(s) and output must perfectly match the specs, or else your
 # implementation for any function with changed specs will most likely fail!
 ################################################################################
 
 ## ================== Functions for students to implement ======================
+
 
 def stringify_labeled_doc(text, ner):
     """
@@ -124,7 +127,7 @@ def stringify_labeled_doc(text, ner):
       named entity. Note that tokens which are part of the same named entity
       should be separated by a single space. BIO prefix are stripped from the
       tags. O tags are ignored.
-      
+
 
       E.g.
       ["Gavin", "Fogel", "is", "cool", "."]
@@ -136,6 +139,7 @@ def stringify_labeled_doc(text, ner):
 
     raise NotImplementedError()
 
+
 def validate_ner_sequence(ner):
     """
     Returns True if the named entity list is valid, False otherwise.
@@ -145,6 +149,6 @@ def validate_ner_sequence(ner):
     Output:
       result: Boolean, True if the named entity list is valid sequence, False otherwise
     """
-    #TODO: YOUR CODE HERE
+    # TODO: YOUR CODE HERE
 
     raise NotImplementedError()
