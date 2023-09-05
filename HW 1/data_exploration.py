@@ -136,8 +136,39 @@ def stringify_labeled_doc(text, ner):
       returns "[PER Gavin Fogel] is cool."
     """
     # TODO: YOUR CODE HERE
+    tagged_sentence = []
+    current_entity = []
 
-    raise NotImplementedError()
+    # Looping through the text and ner lists
+    for i in range(len(text)):
+        # Signals start of a new named entity
+        if ner[i][0] == "B":
+            if current_entity:
+                tagged_sentence.append("[" + " ".join(current_entity) + "]")
+                current_entity = []
+            current_entity.append(ner[i][2:])
+            current_entity.append(text[i])
+        # Signals continuation of a named entity and adds the token to the current entity given same tag
+        elif ner[i][0] == "I":
+            if current_entity and current_entity[0] != ner[i][2:]:
+                tagged_sentence.append("[" + " ".join(current_entity) + "]")
+                current_entity = []
+                current_entity.append(ner[i][2:])
+            if not current_entity:
+                current_entity.append(ner[i][2:])
+            current_entity.append(text[i])
+        # Non named tag O: could signal end of named entity or just a regular token
+        elif ner[i] == "O":
+            if current_entity:
+                tagged_sentence.append("[" + " ".join(current_entity) + "]")
+                current_entity = []
+            tagged_sentence.append(f"{text[i]}")
+
+    # If there is a named entity at the end of the sentence, add it to the tagged sentence
+    if current_entity:
+        tagged_sentence.append("[" + " ".join(current_entity) + "]")
+
+    return " ".join(tagged_sentence)
 
 
 def validate_ner_sequence(ner):
