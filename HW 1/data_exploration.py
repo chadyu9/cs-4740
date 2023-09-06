@@ -180,6 +180,16 @@ def validate_ner_sequence(ner):
     Output:
       result: Boolean, True if the named entity list is valid sequence, False otherwise
     """
-    # TODO: YOUR CODE HERE
+    # Keep track of the current tag associated with a "B" prefix
+    curr_b = ""
+    for i in range(len(ner)):
+        if ner[i][0] == "B":
+            curr_b = ner[i][2:]
+        # Accounts for both a lack of a "B" prefix and a mismatch between the "B" prefix and the "I" prefix
+        elif ner[i][0] == "I":
+            if curr_b != ner[i][2:]:
+                return False
+        else:
+            curr_b = ""
 
-    raise NotImplementedError()
+    return True
