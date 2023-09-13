@@ -44,8 +44,25 @@ def handle_unknown_words(t, documents):
     #  ['cherry', 'apple', 'banana']]
     # vocab: ['banana', 'apple', 'cherry', '<unk>']
     """
-    # YOUR CODE HERE
-    raise NotImplementedError()
+    # Get the token counts
+    token_counts = Counter([token for sentence in documents for token in sentence])
+
+    # Extract the unknown tokens
+    unk_tokens = [
+        token
+        for (token, _) in token_counts.most_common()[
+            : -(int(t * len(token_counts)) + 1) : -1
+        ]
+    ]
+
+    # Construct the new document and vocab
+    new_documents = [
+        [token if token not in unk_tokens else "<unk>" for token in sentence]
+        for sentence in documents
+    ]
+    vocab = [key for key in token_counts.keys() if key not in unk_tokens] + ["<unk>"]
+
+    return new_documents, vocab
 
 
 def apply_smoothing(k, observation_counts, unique_obs):
@@ -77,5 +94,19 @@ def apply_smoothing(k, observation_counts, unique_obs):
 
     Note that the function will be applied to both transition_matrix and emission_matrix.
     """
-    # YOUR CODE HERE
-    raise NotImplemented()
+    # Construct the smoothed log probabilities
+    smoothed_log_probabilities = {
+        (state, obs): np.log(
+            (freq + k)
+            / sum(
+                [
+                    freq_2 + k
+                    for (tag, _), freq_2 in observation_counts.items()
+                    if tag == state
+                ]
+            )
+        )
+        for (state, obs), freq in observation_counts.items()
+    }
+
+    return smoothed_log_probabilities
