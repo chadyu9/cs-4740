@@ -31,7 +31,7 @@ class HMM:
           k_t: Float, add-k parameter to smooth transition probabilities
           k_e: Float, add-k parameter to smooth emission probabilities
           k_s: Float, add-k parameter to smooth starting state probabilities
-          smoothing_func: (Dict<key Tuple[String, String] : value Float>, Float) ->
+          smoothing_func: (Float, Dict<key Tuple[String, String] : value Float>, List[String]) ->
           Dict<key Tuple[String, String] : value Float>
         """
         self.documents = documents
@@ -55,11 +55,28 @@ class HMM:
         Note: Consider all possible tags. This consists of everything in 'all_tags', but also 'qf' our end token.
         Use the `smoothing_func` and `k_t` fields to perform smoothing.
 
+        Note: The final state "qf" can only be transitioned into, there should be no
+        transitions from 'qf' to any other tag in your matrix
+
         Output:
           transition_matrix: Dict<key Tuple[String, String] : value Float>
         """
-        # YOUR CODE HERE
-        raise NotImplementedError()
+        # Initializing raw transition counts
+        raw_transition_counts = {
+            (tag1, tag2): 0 for tag1 in self.all_tags for tag2 in self.all_tags
+        }
+        for tag in self.all_tags:
+            raw_transition_counts[(tag, "qf")] = 0
+
+        # Updating raw transition counts, including transition to qf
+        for sentence_label in self.labels:
+            sentence_label.append("qf")
+            for i in range(len(sentence_label) - 1):
+                raw_transition_counts[(sentence_label[i], sentence_label[i + 1])] += 1
+
+        return self.smoothing_func(
+            self.k_t, raw_transition_counts, self.all_tags + ["qf"]
+        )
 
     def build_emission_matrix(self):
         """
@@ -70,12 +87,26 @@ class HMM:
         Note: Consider all possible tokens from the list `vocab` and all tags from
         the list `all_tags`. Use the `smoothing_func` and `k_e` fields to perform smoothing.
 
+        Note: The final state "qf" is final, as such, there should be no emissions from 'qf'
+        to any token in your matrix (this includes a special end token!). This means the tag
+        'qf' should not have any emissions, and thus not appear in your emission matrix.
+
         Output:
           emission_matrix: Dict<key Tuple[String, String] : value Float>
           Its size should be len(vocab) * len(all_tags).
         """
-        # YOUR CODE HERE
-        raise NotImplementedError()
+        # Initializing raw emission counts
+        raw_emission_counts = {
+            (tag, token): 0 for tag in self.all_tags for token in self.vocab
+        }
+
+        # Updating raw emission counts
+        for sentence, sentence_labels in zip(self.documents, self.labels):
+            for token, tag in zip(sentence, sentence_labels):
+                raw_emission_counts[(tag, token)] += 1
+
+        print("Finished building emission matrix, starting smoothing process...")
+        return self.smoothing_func(self.k_e, raw_emission_counts, self.vocab)
 
     def get_start_state_probs(self):
         """
@@ -87,11 +118,26 @@ class HMM:
         `smoothing_func` is designed to smooth state-observation counts. Manually
         implement smoothing here.
 
+        Note: The final state "qf" can only be transitioned into, as such, there should be no
+        transitions from 'qf' to any token in your matrix. This means the tag 'qf' should
+        not be able to start a sequence, and thus not appear in your start state probs.
+
         Output:
           start_state_probs: Dict<key String : value Float>
         """
-        # YOUR CODE HERE
-        raise NotImplementedError()
+        # Initialize raw start state counts
+        raw_start_state_counts = {tag: 0 for tag in self.all_tags}
+
+        # Updating raw start state counts
+        for sentence_labels in self.labels:
+            raw_start_state_counts[sentence_labels[0]] += 1
+
+        # Manual smoothing
+        smoothed_log_probs = {
+            tag: np.log((freq + self.k_s) / (len(self.labels) * (self.k_s + 1)))
+            for tag, freq in raw_start_state_counts.items()
+        }
+        return smoothed_log_probs
 
     def get_trellis_arc(self, predicted_tag, previous_tag, document, i):
         """
@@ -104,7 +150,10 @@ class HMM:
 
         Note: Treat unseen tokens as an <unk> token.
         Note: Make sure to handle the case where we are dealing with the first word. Is there a transition probability for this case?
-        Note: Make sure to handle the case where the predicted tag is an end token. Is there an emission probability for this case?
+
+        Note: Make sure to handle the case where predicted_tag is 'qf'. This corresponds to predicting the last token for a sequence.
+        We can transition into this tag, but (as per our emission matrix spec), there should be no emissions leaving.
+        As such, our probability when predicted_tag = 'qf' should merely be log[P(predicted_tag | previous_tag))].
 
         Input:
           predicted_tag: String, predicted tag for token at index `i` in `document`
@@ -114,8 +163,22 @@ class HMM:
         Output:
           result: Float
         """
-        # YOUR CODE HERE
-        raise NotImplementedError()
+        # Calculating log[P(predicted_tag | previous_tag))] from the transition matrix
+        log_transition_prob = (
+            self.transition_matrix[(previous_tag, predicted_tag)] if i != 0 else 0
+        )
+
+        # Calculating log[P(document[i] | predicted_tag)] from the emission matrix
+        log_emission_prob = (
+            self.emission_matrix[
+                (predicted_tag, document[i] if document[i] in self.vocab else "<unk>")
+            ]
+            if predicted_tag != "qf"
+            else 0
+        )
+
+        # Summing them up
+        return log_transition_prob + log_emission_prob
 
 
 ################################################################################

@@ -101,8 +101,8 @@ def apply_smoothing(k, observation_counts, unique_obs):
             / sum(
                 [
                     freq_2 + k
-                    for (tag, _), freq_2 in observation_counts.items()
-                    if tag == state
+                    for (state_2, _), freq_2 in observation_counts.items()
+                    if state_2 == state
                 ]
             )
         )
