@@ -70,9 +70,9 @@ class HMM:
 
         # Updating raw transition counts, including transition to qf
         for sentence_label in self.labels:
-            sentence_label.append("qf")
-            for i in range(len(sentence_label) - 1):
-                raw_transition_counts[(sentence_label[i], sentence_label[i + 1])] += 1
+            labels_with_qf = sentence_label + ["qf"]
+            for i in range(len(labels_with_qf) - 1):
+                raw_transition_counts[(labels_with_qf[i], labels_with_qf[i + 1])] += 1
 
         return self.smoothing_func(
             self.k_t, raw_transition_counts, self.all_tags + ["qf"]

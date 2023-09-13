@@ -94,18 +94,14 @@ def apply_smoothing(k, observation_counts, unique_obs):
 
     Note that the function will be applied to both transition_matrix and emission_matrix.
     """
+    # Record the smoothed counts of each state
+    smoothed_counts = {}
+    for (state, _), freq in observation_counts.items():
+        smoothed_counts[state] = smoothed_counts.get(state, 0) + freq + k
+
     # Construct the smoothed log probabilities
     smoothed_log_probabilities = {
-        (state, obs): np.log(
-            (freq + k)
-            / sum(
-                [
-                    freq_2 + k
-                    for (state_2, _), freq_2 in observation_counts.items()
-                    if state_2 == state
-                ]
-            )
-        )
+        (state, obs): np.log((freq + k) / smoothed_counts[state])
         for (state, obs), freq in observation_counts.items()
     }
 
