@@ -136,8 +136,39 @@ def stringify_labeled_doc(text, ner):
       returns "[PER Gavin Fogel] is cool."
     """
     # TODO: YOUR CODE HERE
+    tagged_sentence = []
+    current_entity = []
 
-    raise NotImplementedError()
+    # Looping through the text and ner lists
+    for i in range(len(text)):
+        # Signals start of a new named entity
+        if ner[i][0] == "B":
+            if current_entity:
+                tagged_sentence.append("[" + " ".join(current_entity) + "]")
+                current_entity = []
+            current_entity.append(ner[i][2:])
+            current_entity.append(text[i])
+        # Signals continuation of a named entity and adds the token to the current entity given same tag
+        elif ner[i][0] == "I":
+            if current_entity and current_entity[0] != ner[i][2:]:
+                tagged_sentence.append("[" + " ".join(current_entity) + "]")
+                current_entity = []
+                current_entity.append(ner[i][2:])
+            if not current_entity:
+                current_entity.append(ner[i][2:])
+            current_entity.append(text[i])
+        # Non named tag O: could signal end of named entity or just a regular token
+        elif ner[i] == "O":
+            if current_entity:
+                tagged_sentence.append("[" + " ".join(current_entity) + "]")
+                current_entity = []
+            tagged_sentence.append(f"{text[i]}")
+
+    # If there is a named entity at the end of the sentence, add it to the tagged sentence
+    if current_entity:
+        tagged_sentence.append("[" + " ".join(current_entity) + "]")
+
+    return " ".join(tagged_sentence)
 
 
 def validate_ner_sequence(ner):
@@ -149,6 +180,16 @@ def validate_ner_sequence(ner):
     Output:
       result: Boolean, True if the named entity list is valid sequence, False otherwise
     """
-    # TODO: YOUR CODE HERE
+    # Keep track of the current tag associated with a "B" prefix
+    curr_b = ""
+    for i in range(len(ner)):
+        if ner[i][0] == "B":
+            curr_b = ner[i][2:]
+        # Accounts for both a lack of a "B" prefix and a mismatch between the "B" prefix and the "I" prefix
+        elif ner[i][0] == "I":
+            if curr_b != ner[i][2:]:
+                return False
+        else:
+            curr_b = ""
 
-    raise NotImplementedError()
+    return True
