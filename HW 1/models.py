@@ -105,7 +105,6 @@ class HMM:
             for token, tag in zip(sentence, sentence_labels):
                 raw_emission_counts[(tag, token)] += 1
 
-        print("Finished building emission matrix, starting smoothing process...")
         return self.smoothing_func(self.k_e, raw_emission_counts, self.vocab)
 
     def get_start_state_probs(self):
@@ -165,7 +164,9 @@ class HMM:
         """
         # Calculating log[P(predicted_tag | previous_tag))] from the transition matrix
         log_transition_prob = (
-            self.transition_matrix[(previous_tag, predicted_tag)] if i != 0 else 0
+            self.transition_matrix[(previous_tag, predicted_tag)]
+            if i != 0
+            else self.start_state_probs[predicted_tag]
         )
 
         # Calculating log[P(document[i] | predicted_tag)] from the emission matrix

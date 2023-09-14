@@ -22,5 +22,38 @@ def viterbi(model, observation, tags):
     Output:
       predictions: List[String]
     """
-    # YOUR CODE HERE
-    raise NotImplementedError()
+    # Initialize prediction tags and Viterbi matrix
+    predictions = []
+    v = np.zeros((len(tags), len(observation)))
+    v[:, 0] = [
+        model.get_trellis_arc(tags[j], None, observation, 0) for j in range(len(tags))
+    ]
+
+    # Compute Viterbi matrix and associated predictions for middle transitions
+    for i in range(1, len(observation)):
+        for j in range(len(tags)):
+            v[j, i] = max(
+                [
+                    v[k, i - 1]
+                    + model.get_trellis_arc(tags[j], tags[k], observation, i)
+                    for k in range(len(tags))
+                ]
+            )
+        predictions.append(tags[np.argmax(v[:, i])])
+
+    # Compute final prediction
+    predictions.append(
+        tags[
+            np.argmax(
+                [
+                    v[j, len(observation) - 1]
+                    + model.get_trellis_arc(
+                        "qf", tags[j], observation, len(observation)
+                    )
+                    for j in range(len(tags))
+                ]
+            )
+        ]
+    )
+
+    return predictions
