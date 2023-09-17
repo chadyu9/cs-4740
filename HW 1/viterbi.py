@@ -22,7 +22,7 @@ def viterbi(model, observation, tags):
     Output:
       predictions: List[String]
     """
-    # Initialize prediction tags and Viterbi matrix
+    # Initialize prediction tags, Viterbi matrix, and backpointer matrix
     predictions = []
     vb = np.zeros((len(tags), len(observation)), dtype=int)
     v = np.zeros((len(tags), len(observation)))
@@ -33,6 +33,7 @@ def viterbi(model, observation, tags):
     # Compute Viterbi matrix and associated predictions for middle transitions
     for i in range(1, len(observation)):
         for j in range(len(tags)):
+            # Assign the backpointer first
             vb[j, i] = int(
                 np.argmax(
                     [
@@ -42,9 +43,11 @@ def viterbi(model, observation, tags):
                     ]
                 )
             )
+            # Evaluate the recurrence at the vb[j, i] index of the v matrix
             v[j, i] = v[vb[j, i], i - 1] + model.get_trellis_arc(
                 tags[j], tags[vb[j, i]], observation, i
             )
+        # Append the tag associated with the backpointer of the greatest v value in the column
         predictions.append(tags[vb[np.argmax(v[:, i]), i]])
 
     # Compute final prediction
