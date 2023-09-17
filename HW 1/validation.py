@@ -57,8 +57,8 @@ def format_output_labels(token_labels, token_indices):
             start = None
 
         prev_label = curr_label
-    if start is not None:
-        label_dict[prev_label].append((start, token_indices[idx - 1]))
+    if start is not None and prev_label != "O":
+        label_dict[prev_label].append((start, token_indices[idx]))
     return label_dict
 
 
@@ -116,5 +116,20 @@ def evaluate_model(model, val_set, tags):
     Output:
       mean_F1_score: Float, representing the mean f1 score when the model evaluated using the validation set
     """
-    # YOUR CODE HERE
-    raise NotImplementedError()
+    # Get the flattened lists of tags in validation set and predicted tags from model
+    flat_val_tags = flatten_double_lst(val_set["NER"])
+    print(flat_val_tags)
+    predictions = [viterbi(model, obs, tags) for obs in val_set["text"]]
+    flat_predictions = flatten_double_lst(predictions)
+    print(flat_predictions)
+
+    assert len(flat_val_tags) == len(flat_predictions)
+
+    # Get the flattened indices of the validation set
+    flat_val_indices = flatten_double_lst(val_set["index"])
+
+    # Format the output labels into a dictionary with the indices as values, and then compute the mean F1 score
+    return mean_f1(
+        format_output_labels(flat_predictions, flat_val_indices),
+        format_output_labels(flat_val_tags, flat_val_indices),
+    )
