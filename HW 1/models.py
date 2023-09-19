@@ -212,11 +212,18 @@ class MEMM:
           features_dict: Dict<key String: value Any>, Dictionaries of features
                         (e.g: {'Is_CAP':'True', . . .})
         """
-        features_dict = {}
+        # Construction set of features for the token at document[i]
+        features_dict = {
+            "POS_TAG": pos_tag([document[i]])[0][1],
+            "Is_CAP": 1 if document[i][0].isupper() else 0,
+            # "Is_FIRST": 1 if i == 0 else 0,
+            # "Special_CHAR": 1 if not document[i].isalpha() else 0,
+            "TOKEN_FREQ": document.count(document[i]),
+            "TOKEN_LEN": len(document[i]),
+            "PREV_TAG_NOT_O": previous_tag != "O" if previous_tag else False,
+        }
 
-        # YOUR CODE HERE
-        ### TODO: ADD FEATURES
-        raise NotImplementedError()
+        return features_dict
 
     def generate_classifier(self):
         """
@@ -226,8 +233,20 @@ class MEMM:
         Output:
           classifier: nltk.classify.maxent.MaxentClassifier
         """
-        # YOUR CODE HERE
-        raise NotImplementedError()
+        # Featurizing tokens in documents
+        featurized_tokens = [
+            (
+                self.extract_features_token(self.documents[i], j, None),
+                self.labels[i][j],
+            )
+            for i in range(len(self.documents))
+            for j in range(len(self.documents[i]))
+        ]
+
+        # Return trained classifier
+        return classify.MaxentClassifier.train(
+            train_toks=featurized_tokens, max_iter=10
+        )
 
     def get_trellis_arc(self, predicted_tag, previous_tag, document, i):
         """
@@ -245,5 +264,11 @@ class MEMM:
         Output:
           result: Float
         """
-        # YOUR CODE HERE
-        raise NotImplementedError()
+        if predicted_tag == "qf":
+            return 0
+
+        # Extracting features
+        features = self.extract_features_token(document, i, previous_tag)
+
+        # Calculating log[P(predicted_tag|features_i)] from the classifier
+        return self.classifier.prob_classify(features).logprob(predicted_tag)
