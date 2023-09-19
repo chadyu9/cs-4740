@@ -1,5 +1,5 @@
-# Name(s):
-# Netid(s):
+# Name(s): Chad Yu, Joshua Huang
+# Netid(s): cky25, jth239
 
 ################### IMPORTS - DO NOT ADD, REMOVE, OR MODIFY ####################
 import json
