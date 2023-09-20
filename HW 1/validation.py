@@ -133,25 +133,3 @@ def evaluate_model(model, val_set, tags):
         format_output_labels(flat_predictions, flat_val_indices),
         format_output_labels(flat_val_tags, flat_val_indices),
     )
-
-def evaluate_model_tags_helper(model, val_set, tags):
-    """
-    Evaluates the model on the validation set `val_tokens` and `val_labels` and
-    returns the mean F1 score. Use provided helper function `mean_f1` to compare
-    predicted vs. actual labels.
-
-    Input:
-      model: HMM or MEMM model
-      val_set: Dictionary<key String, value List[List[Any]]>, given validation set with keys: 'text', 'NER', 'index'
-      tags: List[String], all possible NER tags
-    Output:
-      mean_F1_score: Float, representing the mean f1 score when the model evaluated using the validation set
-    """
-    # Get the flattened lists of tags in validation set and predicted tags from model
-    flat_val_tags = flatten_double_lst(val_set["NER"])
-    print(flat_val_tags)
-    predictions = [viterbi(model, obs, tags) for obs in val_set["text"]]
-    flat_predictions = flatten_double_lst(predictions)
-    print(flat_predictions)
-
-    return flat_val_tags, flat_predictions
