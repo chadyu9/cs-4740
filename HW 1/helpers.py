@@ -60,6 +60,7 @@ def handle_unknown_words(t, documents):
         [token if token not in unk_tokens else "<unk>" for token in sentence]
         for sentence in documents
     ]
+
     vocab = [key for key in token_counts.keys() if key not in unk_tokens] + ["<unk>"]
 
     return new_documents, vocab
