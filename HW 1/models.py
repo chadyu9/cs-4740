@@ -131,14 +131,10 @@ class HMM:
         for sentence_labels in self.labels:
             raw_start_state_counts[sentence_labels[0]] += 1
 
-        # Manual smoothing
-        smoothed_probs = {
-            tag: (freq + self.k_s) / (len(self.labels) * (self.k_s + 1))
-            for tag, freq in raw_start_state_counts.items()
-        }
-        print(smoothed_probs)
         smoothed_log_probs = {
-            tag: np.log((freq + self.k_s) / (len(self.labels) * (self.k_s + 1)))
+            tag: np.log(
+                (freq + self.k_s) / (len(self.all_tags) * self.k_s + len(self.labels))
+            )
             for tag, freq in raw_start_state_counts.items()
         }
         return smoothed_log_probs
@@ -217,17 +213,15 @@ class MEMM:
           features_dict: Dict<key String: value Any>, Dictionaries of features
                         (e.g: {'Is_CAP':'True', . . .})
         """
-        # Construction set of features for the token at document[i]
+        # Construction of set of features for the token at document[i]
         features_dict = {
             "POS_TAG": pos_tag([document[i]])[0][1],
             "Is_CAP": 1 if document[i][0].isupper() else 0,
             "Is_FIRST": 1 if i == 0 else 0,
-            # "Special_CHAR": 1 if not document[i].isalpha() else 0,
-            # "TOKEN_FREQ": document.count(document[i]),
-            # "TOKEN_LEN": len(document[i]),
             "PREV_TAG": previous_tag,
             "CURR_TOK": document[i],
             "NEXT_TOK": document[i + 1] if i < len(document) - 1 else None,
+            "PREV_TOK": document[i - 1] if i > 0 else None,
         }
 
         return features_dict
