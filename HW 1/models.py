@@ -1,5 +1,5 @@
-# Name(s):
-# Netid(s):
+# Name(s): Chad Yu, Joshua Huang
+# Netid(s): cky25, jth239
 ################################################################################
 # NOTE: Do NOT change any of the function headers and/or specs!
 # The input(s) and output must perfectly match the specs, or else your
@@ -131,9 +131,10 @@ class HMM:
         for sentence_labels in self.labels:
             raw_start_state_counts[sentence_labels[0]] += 1
 
-        # Manual smoothing
         smoothed_log_probs = {
-            tag: np.log((freq + self.k_s) / (len(self.labels) * (self.k_s + 1)))
+            tag: np.log(
+                (freq + self.k_s) / (len(self.all_tags) * self.k_s + len(self.labels))
+            )
             for tag, freq in raw_start_state_counts.items()
         }
         return smoothed_log_probs
@@ -212,11 +213,18 @@ class MEMM:
           features_dict: Dict<key String: value Any>, Dictionaries of features
                         (e.g: {'Is_CAP':'True', . . .})
         """
-        features_dict = {}
+        # Construction of set of features for the token at document[i]
+        features_dict = {
+            "POS_TAG": pos_tag([document[i]])[0][1],
+            "Is_CAP": 1 if document[i][0].isupper() else 0,
+            "Is_FIRST": 1 if i == 0 else 0,
+            "PREV_TAG": previous_tag,
+            "CURR_TOK": document[i],
+            "NEXT_TOK": document[i + 1] if i < len(document) - 1 else None,
+            "PREV_TOK": document[i - 1] if i > 0 else None,
+        }
 
-        # YOUR CODE HERE
-        ### TODO: ADD FEATURES
-        raise NotImplementedError()
+        return features_dict
 
     def generate_classifier(self):
         """
@@ -226,8 +234,20 @@ class MEMM:
         Output:
           classifier: nltk.classify.maxent.MaxentClassifier
         """
-        # YOUR CODE HERE
-        raise NotImplementedError()
+        # Featurizing tokens in documents
+        featurized_tokens = [
+            (
+                self.extract_features_token(self.documents[i], j, None),
+                self.labels[i][j],
+            )
+            for i in range(len(self.documents))
+            for j in range(len(self.documents[i]))
+        ]
+
+        # Return trained classifier
+        return classify.MaxentClassifier.train(
+            train_toks=featurized_tokens, max_iter=10
+        )
 
     def get_trellis_arc(self, predicted_tag, previous_tag, document, i):
         """
@@ -245,5 +265,11 @@ class MEMM:
         Output:
           result: Float
         """
-        # YOUR CODE HERE
-        raise NotImplementedError()
+        if predicted_tag == "qf":
+            return 0
+
+        # Extracting features
+        features = self.extract_features_token(document, i, previous_tag)
+
+        # Calculating log[P(predicted_tag|features_i)] from the classifier
+        return self.classifier.prob_classify(features).logprob(predicted_tag)

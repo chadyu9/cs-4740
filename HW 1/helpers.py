@@ -1,5 +1,5 @@
-# Name(s):
-# Netid(s):
+# Name(s): Chad Yu, Joshua Huang
+# Netid(s): cky25, jth239
 ################################################################################
 # NOTE: Do NOT change any of the function headers and/or specs!
 # The input(s) and output must perfectly match the specs, or else your
@@ -60,6 +60,7 @@ def handle_unknown_words(t, documents):
         [token if token not in unk_tokens else "<unk>" for token in sentence]
         for sentence in documents
     ]
+
     vocab = [key for key in token_counts.keys() if key not in unk_tokens] + ["<unk>"]
 
     return new_documents, vocab

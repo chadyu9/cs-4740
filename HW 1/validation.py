@@ -1,5 +1,5 @@
-# Name(s):
-# Netid(s):
+# Name(s): Chad Yu, Joshua Huang
+# Netid(s): cky25, jth239
 ################################################################################
 # NOTE: Do NOT change any of the function headers and/or specs!
 # The input(s) and output must perfectly match the specs, or else your
