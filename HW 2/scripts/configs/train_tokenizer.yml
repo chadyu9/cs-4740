@@ -1,0 +1,6 @@
+init:
+  lowercase: False
+
+train:
+  text_colname: "text"
+  reset: True

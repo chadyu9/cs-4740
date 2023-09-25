@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Gangavarapu"
+  given-names: "Tushaar"
+- family-names: "Chaixanien"
+  given-names: "Pun"
+- family-names: "Horstmann"
+  given-names: "Kai"
+- family-names: "Jung"
+  given-names: "Dave"
+- family-names: "Uppuluri"
+  given-names: "Aaishi"
+- family-names: "Lee"
+  given-names: "Lillian"
+- family-names: "Key"
+  given-names: "Darren"
+- family-names: "Kraver"
+  given-names: "Logan"
+- family-names: "Tan"
+  given-names: "Lionel"
+title: "CS 4740 Fa'23 HW2: Named-entity recognition using FFNNs and RNNs"
+version: 1.0
+date-released: 2023-09-22
+url: "https://github.coecis.cornell.edu/cs4740-fa23-public/hw2-fa23"
