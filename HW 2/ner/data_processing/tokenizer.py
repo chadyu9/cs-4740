@@ -25,7 +25,9 @@ class Tokenizer(object):
         self.unk_token = unk_token
 
         if lowercase:
-            logging.warning(f"lowercase set to {lowercase}, which could impact named-entity recognition")
+            logging.warning(
+                f"lowercase set to {lowercase}, which could impact named-entity recognition"
+            )
         self.lowercase = lowercase
 
         self.token2id = {pad_token: 0, unk_token: 1}
@@ -79,13 +81,26 @@ class Tokenizer(object):
             text_data = [token.lower() for token in text_data]
         token_freqs = Counter(text_data)
 
-        valid_tokens = [token for token, freq in token_freqs.items() if freq >= min_freq]
-        logging.info(f"num of unique tokens retained after min freq of {min_freq} filtering: {len(valid_tokens)}")
-        top_tokens = sorted(valid_tokens, key=lambda token: token_freqs[token], reverse=True)
+        valid_tokens = [
+            token for token, freq in token_freqs.items() if freq >= min_freq
+        ]
+        logging.info(
+            f"num of unique tokens retained after min freq of {min_freq} filtering: {len(valid_tokens)}"
+        )
+        top_tokens = sorted(
+            valid_tokens, key=lambda token: token_freqs[token], reverse=True
+        )
         top_tokens = top_tokens[: len(top_tokens) - int(remove_frac * len(top_tokens))]
-        logging.info(f"num of unique tokens retained after {remove_frac} fraction of tokens removed: {len(top_tokens)}")
+        logging.info(
+            f"num of unique tokens retained after {remove_frac} fraction of tokens removed: {len(top_tokens)}"
+        )
 
-        self.token2id.update({token: existing_vocab_size + token_id for token_id, token in enumerate(top_tokens)})
+        self.token2id.update(
+            {
+                token: existing_vocab_size + token_id
+                for token_id, token in enumerate(top_tokens)
+            }
+        )
 
     def save(self, filepath: str) -> None:
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -110,7 +125,9 @@ class Tokenizer(object):
         # TODO-1.1-1
         raise NotImplementedError  # remove once the method is filled
 
-    def decode(self, input_ids: torch.Tensor, return_as_list=False) -> Union[List[str], str]:
+    def decode(
+        self, input_ids: torch.Tensor, return_as_list=False
+    ) -> Union[List[str], str]:
         if return_as_list:
             return [self.id2token[input_id] for input_id in input_ids.numpy()]
         return " ".join([self.id2token[input_id] for input_id in input_ids.numpy()])
