@@ -122,8 +122,47 @@ class Tokenizer(object):
         truncation_side: str = "right",
     ) -> Dict[str, torch.Tensor]:
         """Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.data_processing.tokenizer.html."""
-        # TODO-1.1-1
-        raise NotImplementedError  # remove once the method is filled
+        if type(input_seq) == str:
+            input_seq = input_seq.split()
+
+        padded_tokens = []
+
+        if truncation_side == "left":
+            padded_tokens += input_seq[
+                max(
+                    len(input_seq) - (max_length if max_length else len(input_seq)), 0
+                ) :
+            ]
+        else:
+            padded_tokens += input_seq[
+                : -max(
+                    len(input_seq) - (max_length if max_length else len(input_seq)), 0
+                )
+                or None
+            ]
+
+        if padding_side == "left":
+            padded_tokens = [self.pad_token] * max(
+                (max_length if max_length else len(input_seq)) - len(input_seq), 0
+            ) + padded_tokens
+        else:
+            padded_tokens += [self.pad_token] * max(
+                (max_length if max_length else len(input_seq)) - len(input_seq), 0
+            )
+
+        input_ids = torch.LongTensor(
+            [
+                self.token2id.get(token, self.token2id[self.unk_token])
+                for token in padded_tokens
+            ]
+        )
+
+        padding_mask = torch.where(input_ids == 0, 1, 0)
+
+        return {
+            "input_ids": input_ids,
+            "padding_mask": padding_mask,
+        }
 
     def decode(
         self, input_ids: torch.Tensor, return_as_list=False
