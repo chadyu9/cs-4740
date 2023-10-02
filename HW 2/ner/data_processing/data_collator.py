@@ -31,15 +31,24 @@ class DataCollator(object):
         self.label_colname = label_colname
 
     def _get_max_length(self, data_instances: List[Dict[str, Any]]) -> Optional[int]:
-        if not ((self.padding == "longest" or self.padding) and self.max_length is None):
+        if not (
+            (self.padding == "longest" or self.padding) and self.max_length is None
+        ):
             logging.warning(
                 f"both max_length={self.max_length} and padding={self.padding} provided; ignoring "
                 f"padding={self.padding} and using max_length={self.max_length}"
             )
             self.padding = "max_length"
 
-        if self.padding == "longest" or (isinstance(self.padding, bool) and self.padding):
-            return max([len(data_instance[self.text_colname]) for data_instance in data_instances])
+        if self.padding == "longest" or (
+            isinstance(self.padding, bool) and self.padding
+        ):
+            return max(
+                [
+                    len(data_instance[self.text_colname])
+                    for data_instance in data_instances
+                ]
+            )
         elif self.padding == "max_length":
             return self.max_length
         elif isinstance(self.padding, bool) and not self.padding:
@@ -54,5 +63,58 @@ class DataCollator(object):
         """
         Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.data_processing.data_collator.html.
         """
-        # TODO-1.2-1
-        raise NotImplementedError  # remove once the method is filled
+        batch_size = len(data_instances)
+        batch_max_length = (
+            self._get_max_length(data_instances)
+            if self._get_max_length(data_instances)
+            else len(data_instances[0][self.text_colname])
+        )
+
+        padded_batch = {}
+        input_ids = torch.empty((batch_size, batch_max_length), dtype=torch.long)
+        padding_mask = torch.empty((batch_size, batch_max_length), dtype=torch.long)
+
+        for i in range(len(data_instances)):
+            tokenized_seq = self.tokenizer.tokenize(
+                data_instances[i][self.text_colname],
+                max_length=batch_max_length,
+                padding_side=self.padding_side,
+                truncation_side=self.truncation_side,
+            )
+            input_ids[i] = tokenized_seq["input_ids"]
+            padding_mask[i] = tokenized_seq["padding_mask"]
+
+        padded_batch["input_ids"] = input_ids
+        padded_batch["padding_mask"] = padding_mask
+
+        if self.label_colname in data_instances[0]:
+            labels = torch.empty((batch_size, batch_max_length), dtype=torch.long)
+            for i in range(len(data_instances)):
+                non_padded_labels = data_instances[i][self.label_colname]
+                if self.truncation_side == "left":
+                    non_padded_labels = non_padded_labels[
+                        max(
+                            len(non_padded_labels) - batch_max_length,
+                            0,
+                        ) :
+                    ]
+                else:
+                    non_padded_labels = non_padded_labels[
+                        : -max(
+                            len(non_padded_labels) - batch_max_length,
+                            0,
+                        )
+                        or None
+                    ]
+
+                pad_length = torch.sum(padding_mask[i]).item()
+                if self.padding_side == "left":
+                    non_padded_labels = [self.pad_tag] * pad_length + non_padded_labels
+                else:
+                    non_padded_labels += [self.pad_tag] * pad_length
+
+                labels[i] = self._process_labels(non_padded_labels)
+
+            padded_batch["labels"] = labels
+
+        return padded_batch
