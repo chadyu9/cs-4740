@@ -10,7 +10,9 @@ from torch import nn
 from ner.utils.utils import get_named_entity_spans
 
 
-def compute_loss(loss_fn: Callable, preds: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+def compute_loss(
+    loss_fn: Callable, preds: torch.Tensor, labels: torch.Tensor
+) -> torch.Tensor:
     # preds: (batch_size, max_length, output_dim)
     # labels: (batch_size, max_length)
     assert len(preds.shape) >= 2 and len(labels.shape) >= 1
@@ -29,14 +31,21 @@ def compute_entity_f1(
     y_true_named_ent_spans_dict = y_true
     y_pred_named_ent_spans_dict = y_pred
     if isinstance(y_true, np.ndarray):
-        y_true_named_ent_spans_dict = get_named_entity_spans(encoded_ner_ids=y_true.squeeze(), token_idxs=token_idxs)
+        y_true_named_ent_spans_dict = get_named_entity_spans(
+            encoded_ner_ids=y_true.squeeze(), token_idxs=token_idxs
+        )
     if isinstance(y_pred, np.ndarray):
-        y_pred_named_ent_spans_dict = get_named_entity_spans(encoded_ner_ids=y_pred.squeeze(), token_idxs=token_idxs)
+        y_pred_named_ent_spans_dict = get_named_entity_spans(
+            encoded_ner_ids=y_pred.squeeze(), token_idxs=token_idxs
+        )
 
     ent_wise_f1, support = [], []
     for ent_label in y_true_named_ent_spans_dict.keys():
         num_true, num_correct = 0, 0
-        pred_spans, true_spans = y_pred_named_ent_spans_dict[ent_label], y_true_named_ent_spans_dict[ent_label]
+        pred_spans, true_spans = (
+            y_pred_named_ent_spans_dict[ent_label],
+            y_true_named_ent_spans_dict[ent_label],
+        )
         for true_span in true_spans:
             num_true = num_true + 1
             if true_span in pred_spans:
@@ -74,24 +83,38 @@ def compute_metrics(
     # preds: (batch_size, max_length, output_dim)
     # labels, padding_mask: (batch_size, max_length)
     assert len(preds.shape) >= 2 and len(labels.shape) >= 1
-    assert labels_ignore_idx is not None or padding_mask is not None, "labels_ignore_idx or padding_mask must be given"
+    assert (
+        labels_ignore_idx is not None or padding_mask is not None
+    ), "labels_ignore_idx or padding_mask must be given"
 
     preds = preds.view(-1, preds.shape[-1]).argmax(dim=-1)
     labels = labels.view(-1)
 
-    if padding_mask is not None and (padding_mask.dtype == torch.long or padding_mask.dtype == torch.int):
+    if padding_mask is not None and (
+        padding_mask.dtype == torch.long or padding_mask.dtype == torch.int
+    ):
         padding_mask = torch.BoolTensor(padding_mask == 1)
-    mask = (~padding_mask.view(-1)) if padding_mask is not None else (labels != labels_ignore_idx)
+    mask = (
+        (~padding_mask.view(-1))
+        if padding_mask is not None
+        else (labels != labels_ignore_idx)
+    )
     y_true, y_pred = labels[mask].cpu().numpy(), preds[mask].cpu().numpy()
-    entity_f1 = compute_entity_f1(y_true=y_true, y_pred=y_pred, average=average)  # don't apply "other" tag mask
+    entity_f1 = compute_entity_f1(
+        y_true=y_true, y_pred=y_pred, average=average
+    )  # don't apply "other" tag mask
 
     if other_ner_tag_idx is not None:
         mask = mask & (labels != other_ner_tag_idx)
     y_true, y_pred = labels[mask].cpu().numpy(), preds[mask].cpu().numpy()
     metrics = {
         "entity_f1": entity_f1,
-        "precision": precision_score(y_true=y_true, y_pred=y_pred, zero_division=0, average=average),
-        "recall": recall_score(y_true=y_true, y_pred=y_pred, zero_division=0, average=average),
+        "precision": precision_score(
+            y_true=y_true, y_pred=y_pred, zero_division=0, average=average
+        ),
+        "recall": recall_score(
+            y_true=y_true, y_pred=y_pred, zero_division=0, average=average
+        ),
         "f1": f1_score(y_true=y_true, y_pred=y_pred, zero_division=0, average=average),
         "accuracy": accuracy_score(y_true=y_true, y_pred=y_pred),
     }
@@ -114,13 +137,23 @@ if __name__ == "__main__":
         average = "weighted"
 
     test_config = TestConfig()
-    test_preds = torch.randn((test_config.batch_size, test_config.max_length, test_config.output_dim))
-    test_labels = torch.randint(0, test_config.output_dim, (test_config.batch_size, test_config.max_length))
-    test_padding_mask = torch.where(torch.BoolTensor(test_labels == test_config.pad_ner_tag_idx), 1, 0)
+    test_preds = torch.randn(
+        (test_config.batch_size, test_config.max_length, test_config.output_dim)
+    )
+    test_labels = torch.randint(
+        0, test_config.output_dim, (test_config.batch_size, test_config.max_length)
+    )
+    test_padding_mask = torch.where(
+        torch.BoolTensor(test_labels == test_config.pad_ner_tag_idx), 1, 0
+    )
 
     test_loss = compute_loss(test_config.loss_fn, preds=test_preds, labels=test_labels)
     assert torch.isclose(
-        test_loss, F.cross_entropy(input=test_preds.view(-1, test_config.output_dim), target=test_labels.view(-1))
+        test_loss,
+        F.cross_entropy(
+            input=test_preds.view(-1, test_config.output_dim),
+            target=test_labels.view(-1),
+        ),
     )
 
     test_metrics_with_padding_mask = compute_metrics(
@@ -137,4 +170,7 @@ if __name__ == "__main__":
         other_ner_tag_idx=test_config.other_ner_tag_idx,
         average=test_config.average,
     )
-    assert np.allclose(list(test_metrics_with_padding_mask.values()), list(test_metrics_with_ignore_idx.values()))
+    assert np.allclose(
+        list(test_metrics_with_padding_mask.values()),
+        list(test_metrics_with_ignore_idx.values()),
+    )

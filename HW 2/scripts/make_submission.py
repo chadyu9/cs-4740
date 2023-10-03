@@ -10,7 +10,12 @@ import datasets
 import torch
 import yaml
 
-from ner.data_processing.constants import PAD_NER_TAG, PAD_TOKEN, UNK_TOKEN, NER_ENCODING_MAP
+from ner.data_processing.constants import (
+    PAD_NER_TAG,
+    PAD_TOKEN,
+    UNK_TOKEN,
+    NER_ENCODING_MAP,
+)
 from ner.data_processing.data_collator import DataCollator
 from ner.data_processing.tokenizer import Tokenizer
 from ner.models import NERPredictor
@@ -20,12 +25,19 @@ from ner.utils.utils import set_seed
 csv.field_size_limit(sys.maxsize)
 
 
-def _write_preds_dict_to_csv(preds_dict: Dict[str, List[Tuple[int]]], preds_filepath: str) -> None:
+def _write_preds_dict_to_csv(
+    preds_dict: Dict[str, List[Tuple[int]]], preds_filepath: str
+) -> None:
     with open(preds_filepath, "w") as fp:
         writer = csv.DictWriter(fp, fieldnames=["id", "pred"])
         writer.writeheader()
         for ent in preds_dict:
-            pred_str = " ".join([str(start_idx) + "-" + str(end_idx) for start_idx, end_idx in preds_dict[ent]])
+            pred_str = " ".join(
+                [
+                    str(start_idx) + "-" + str(end_idx)
+                    for start_idx, end_idx in preds_dict[ent]
+                ]
+            )
             writer.writerow({"id": ent, "pred": pred_str})
 
 
@@ -44,7 +56,11 @@ def _run_model_and_write_preds(
     device = torch.device("cpu")
     if config["general"]["device"] == "auto":
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    elif device == "mps" and torch.backends.mps.is_available() and torch.backends.mps.is_built():
+    elif (
+        device == "mps"
+        and torch.backends.mps.is_available()
+        and torch.backends.mps.is_built()
+    ):
         device = torch.device("mps")
     elif device == "cuda" and torch.cuda.is_available():
         device = torch.device("cuda")
@@ -59,10 +75,14 @@ def _run_model_and_write_preds(
 
     if pretrained_checkpoint_or_model_filepath is not None:
         if pretrained_checkpoint_or_model_filepath.endswith(".ckpt"):
-            checkpoint = torch.load(pretrained_checkpoint_or_model_filepath, map_location=device)
+            checkpoint = torch.load(
+                pretrained_checkpoint_or_model_filepath, map_location=device
+            )
             model.load_state_dict(checkpoint["model_state_dict"])
         elif pretrained_checkpoint_or_model_filepath.endswith(".pt"):
-            model.from_pretrained(model_filepath=pretrained_checkpoint_or_model_filepath)
+            model.from_pretrained(
+                model_filepath=pretrained_checkpoint_or_model_filepath
+            )
         else:
             raise ValueError("model file not supported")
     else:
@@ -81,7 +101,9 @@ def _run_model_and_write_preds(
         with open(os.path.join(model_outputs_path, "config.json"), "w") as fp:
             json.dump(config, fp)
         model.save_pretrained(os.path.join(model_outputs_path, "model.pt"))
-    _write_preds_dict_to_csv(preds_dict, preds_filepath=os.path.join(model_outputs_path, "test_preds.csv"))
+    _write_preds_dict_to_csv(
+        preds_dict, preds_filepath=os.path.join(model_outputs_path, "test_preds.csv")
+    )
 
 
 def _append_net_ids_to_file(filename: str, net_ids: str) -> None:
@@ -97,8 +119,10 @@ def _append_net_ids_to_file(filename: str, net_ids: str) -> None:
         fp.writelines([start_line, net_ids] + content)
 
 
-def _write_ner_files(net_ids: Optional[str], ner_outputs_path: str, is_milestone_submission: bool) -> None:
-    ner_basepath = "ner"
+def _write_ner_files(
+    net_ids: Optional[str], ner_outputs_path: str, is_milestone_submission: bool
+) -> None:
+    ner_basepath = "../ner"
     files_to_copy = [
         os.path.join(ner_basepath, "data_processing/tokenizer.py"),
         os.path.join(ner_basepath, "data_processing/data_collator.py"),
@@ -113,11 +137,16 @@ def _write_ner_files(net_ids: Optional[str], ner_outputs_path: str, is_milestone
     for file in files_to_copy:
         shutil.copy2(file, ner_outputs_path)
         if net_ids is not None:
-            _append_net_ids_to_file(filename=os.path.join(ner_outputs_path, os.path.basename(file)), net_ids=net_ids)
+            _append_net_ids_to_file(
+                filename=os.path.join(ner_outputs_path, os.path.basename(file)),
+                net_ids=net_ids,
+            )
 
 
 def _make_output_dirs(
-    basepath_to_store_submission: str, is_leaderboard_submission: bool, is_milestone_submission: bool
+    basepath_to_store_submission: str,
+    is_leaderboard_submission: bool,
+    is_milestone_submission: bool,
 ) -> Dict[str, str]:
     ner_outputs_path = os.path.join(basepath_to_store_submission, "ner")
     tokenizer_outputs_path = os.path.join(basepath_to_store_submission, "tokenizer")
@@ -166,11 +195,17 @@ def main(
         basepath_to_store_submission = basepath_to_store_submission[:-1]
 
     if is_leaderboard_submission:
-        basepath_to_store_submission = os.path.join(basepath_to_store_submission, "leaderboard_submission")
+        basepath_to_store_submission = os.path.join(
+            basepath_to_store_submission, "leaderboard_submission"
+        )
     elif is_milestone_submission:
-        basepath_to_store_submission = os.path.join(basepath_to_store_submission, "milestone_submission")
+        basepath_to_store_submission = os.path.join(
+            basepath_to_store_submission, "milestone_submission"
+        )
     else:
-        basepath_to_store_submission = os.path.join(basepath_to_store_submission, "hw2_submission")
+        basepath_to_store_submission = os.path.join(
+            basepath_to_store_submission, "hw2_submission"
+        )
     _delete_if_exists(f"{basepath_to_store_submission}.zip")
     all_output_paths = _make_output_dirs(
         basepath_to_store_submission,
@@ -179,7 +214,9 @@ def main(
     )
     if not is_leaderboard_submission:
         if net_ids is None:
-            raise ValueError("must include '--net-ids' as a comma-separated string (e.g., '<net-id-1>, <net-id-2>')")
+            raise ValueError(
+                "must include '--net-ids' as a comma-separated string (e.g., '<net-id-1>, <net-id-2>')"
+            )
         _write_ner_files(
             ner_outputs_path=all_output_paths["ner_outputs_path"],
             is_milestone_submission=is_milestone_submission,
@@ -187,15 +224,27 @@ def main(
         )
 
     if not is_milestone_submission:
-        config_path = ffnn_config_path if ffnn_config_path is not None else rnn_config_path
-        assert config_path is not None, "at least one of ffnn or rnn config paths must be provided"
+        config_path = (
+            ffnn_config_path if ffnn_config_path is not None else rnn_config_path
+        )
+        assert (
+            config_path is not None
+        ), "at least one of ffnn or rnn config paths must be provided"
         with open(config_path, "r") as fp:
             config = yaml.safe_load(fp)
-        tokenizer = Tokenizer(pad_token=PAD_TOKEN, unk_token=UNK_TOKEN, **config["tokenizer"])
+        tokenizer = Tokenizer(
+            pad_token=PAD_TOKEN, unk_token=UNK_TOKEN, **config["tokenizer"]
+        )
         tokenizer.from_file(tokenizer_filepath)
-        data_collator = DataCollator(tokenizer=tokenizer, pad_tag=PAD_NER_TAG, **config["data_collator"])
+        data_collator = DataCollator(
+            tokenizer=tokenizer, pad_tag=PAD_NER_TAG, **config["data_collator"]
+        )
         if not is_leaderboard_submission:
-            tokenizer.save(os.path.join(all_output_paths["tokenizer_outputs_path"], "tokenizer.json"))
+            tokenizer.save(
+                os.path.join(
+                    all_output_paths["tokenizer_outputs_path"], "tokenizer.json"
+                )
+            )
 
         test_data = datasets.load_from_disk(basepath_to_hf_dataset)["test"]
         if pretrained_ffnn_checkpoint_or_model_filepath is not None:
@@ -219,7 +268,9 @@ def main(
                 is_leaderboard_submission=is_leaderboard_submission,
             )
 
-    shutil.make_archive(basepath_to_store_submission, "zip", basepath_to_store_submission)
+    shutil.make_archive(
+        basepath_to_store_submission, "zip", basepath_to_store_submission
+    )
     shutil.rmtree(basepath_to_store_submission)
     print(f"submission stored at: {basepath_to_store_submission}.zip\n")
 

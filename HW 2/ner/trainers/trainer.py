@@ -11,7 +11,12 @@ from sklearn.utils import class_weight
 from torch import nn
 from torch.utils.data import DataLoader
 
-from ner.data_processing.constants import NER_ENCODING_MAP, PAD_NER_TAG, PAD_TOKEN, UNK_TOKEN
+from ner.data_processing.constants import (
+    NER_ENCODING_MAP,
+    PAD_NER_TAG,
+    PAD_TOKEN,
+    UNK_TOKEN,
+)
 from ner.data_processing.data_collator import DataCollator
 from ner.data_processing.tokenizer import Tokenizer
 from ner.models.ner_predictor import NERPredictor
@@ -51,11 +56,17 @@ class Trainer(object):
         self.data_collator = data_collator
         self.grad_clip_max_norm = grad_clip_max_norm
         if use_class_weights:
-            class_weights = class_weights if class_weights else self._compute_class_weights(train_data, label_colname)
+            class_weights = (
+                class_weights
+                if class_weights
+                else self._compute_class_weights(train_data, label_colname)
+            )
             # PyTorch FloatTensor doesn't support device: https://github.com/pytorch/pytorch/issues/20122.
             class_weights = torch.Tensor(class_weights).to(device)
             logging.info(f"class weights: {class_weights}")
-        self.loss_fn = nn.CrossEntropyLoss(ignore_index=self.labels_ignore_idx, weight=class_weights)
+        self.loss_fn = nn.CrossEntropyLoss(
+            ignore_index=self.labels_ignore_idx, weight=class_weights
+        )
 
         self.tracker = tracker
         self._epoch = 0
@@ -63,7 +74,9 @@ class Trainer(object):
     @staticmethod
     def _compute_class_weights(train_data, label_colname="NER"):
         train_labels = list(chain(*train_data[label_colname]))
-        class_weights = class_weight.compute_class_weight("balanced", classes=np.unique(train_labels), y=train_labels)
+        class_weights = class_weight.compute_class_weight(
+            "balanced", classes=np.unique(train_labels), y=train_labels
+        )
         return class_weights
 
     def save_checkpoint(self, checkpoint_path: str) -> None:
@@ -84,27 +97,95 @@ class Trainer(object):
 
     def _train_epoch(self, dataloader) -> Dict[str, float]:
         """Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.trainers.trainer.html."""
-        metrics = {"loss": [], "precision": [], "recall": [], "accuracy": [], "f1": [], "entity_f1": []}
+        metrics = {
+            "loss": [],
+            "precision": [],
+            "recall": [],
+            "accuracy": [],
+            "f1": [],
+            "entity_f1": [],
+        }
 
-        # TODO-3-1
-        raise NotImplementedError  # remove once the method is filled
+        self.model.train()
 
-        average_metrics = {metric: np.average(score) for metric, score in metrics.items()}
+        for batch in dataloader:
+            self.optimizer.zero_grad()
+
+            input_ids = batch["input_ids"].to(self.device)
+            preds = self.model(input_ids)
+            loss = compute_loss(self.loss_fn, preds, batch["labels"].to(self.device))
+            loss.backward()
+            loss = loss.item()
+
+            if self.grad_clip_max_norm:
+                nn.utils.clip_grad_norm_(
+                    self.model.parameters(), self.grad_clip_max_norm
+                )
+            self.optimizer.step()
+
+            batch_metrics = compute_metrics(
+                preds=preds,
+                labels=batch["labels"],
+                padding_mask=batch["padding_mask"],
+                other_ner_tag_idx=self.other_ner_tag_idx,
+                average="weighted",
+            )
+
+            for key in metrics:
+                metrics[key].append(batch_metrics[key]) if key != "loss" else metrics[
+                    key
+                ].append(loss)
+
+        print(metrics)
+        average_metrics = {
+            metric: np.average(score) for metric, score in metrics.items()
+        }
         return average_metrics
 
     @torch.no_grad()
     def _eval_epoch(self, dataloader) -> Dict[str, float]:
         """Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.trainers.trainer.html."""
-        metrics = {"loss": [], "precision": [], "recall": [], "accuracy": [], "f1": [], "entity_f1": []}
+        metrics = {
+            "loss": [],
+            "precision": [],
+            "recall": [],
+            "accuracy": [],
+            "f1": [],
+            "entity_f1": [],
+        }
 
-        # TODO-3-2
-        raise NotImplementedError  # remove once the method is filled
+        self.model.eval()
 
-        average_metrics = {metric: np.average(score) for metric, score in metrics.items()}
+        for batch in dataloader:
+            input_ids = batch["input_ids"].to(self.device)
+            preds = self.model(input_ids)
+            loss = compute_loss(self.loss_fn, preds, batch["labels"].to(self.device))
+            loss = loss.item()
+
+            batch_metrics = compute_metrics(
+                preds=preds,
+                labels=batch["labels"],
+                padding_mask=batch["padding_mask"],
+                other_ner_tag_idx=self.other_ner_tag_idx,
+                average="weighted",
+            )
+
+            for key in metrics:
+                metrics[key].append(batch_metrics[key]) if key != "loss" else metrics[
+                    key
+                ].append(loss)
+
+        average_metrics = {
+            metric: np.average(score) for metric, score in metrics.items()
+        }
         return average_metrics
 
     def train_and_eval(
-        self, batch_size: int = 128, num_epochs: int = 8, checkpoint_every: int = 1, num_workers: int = 0
+        self,
+        batch_size: int = 128,
+        num_epochs: int = 8,
+        checkpoint_every: int = 1,
+        num_workers: int = 0,
     ) -> None:
         train_dataloader = DataLoader(
             self.train_data,
@@ -127,11 +208,17 @@ class Trainer(object):
 
         for epoch in range(num_epochs):
             train_metrics = self._train_epoch(train_dataloader)
-            val_metrics = self._eval_epoch(val_dataloader) if val_dataloader is not None else None
+            val_metrics = (
+                self._eval_epoch(val_dataloader) if val_dataloader is not None else None
+            )
             if self.tracker is not None:
-                self.tracker.log_metrics(epoch=self._epoch, split="train", metrics=train_metrics)
+                self.tracker.log_metrics(
+                    epoch=self._epoch, split="train", metrics=train_metrics
+                )
                 if val_metrics is not None:
-                    self.tracker.log_metrics(epoch=self._epoch, split="val", metrics=val_metrics)
+                    self.tracker.log_metrics(
+                        epoch=self._epoch, split="val", metrics=val_metrics
+                    )
                 if (epoch + 1) % checkpoint_every == 0:
                     self.tracker.save_checkpoint(self, epoch=self._epoch)
             self._epoch = self._epoch + 1
@@ -174,5 +261,7 @@ class Trainer(object):
 
             preds = preds.view(-1, preds.shape[-1]).argmax(dim=-1)
             all_preds.append(preds[mask].cpu().numpy().squeeze())
-        preds_dict = get_named_entity_spans(encoded_ner_ids=np.concatenate(all_preds), token_idxs=token_idxs)
+        preds_dict = get_named_entity_spans(
+            encoded_ner_ids=np.concatenate(all_preds), token_idxs=token_idxs
+        )
         return preds_dict
