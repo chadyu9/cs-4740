@@ -17,7 +17,7 @@ class TokenEmbedding(Module):
             padding_idx=padding_idx,
         )
 
-        self.embedding.apply(Module.init_weights)
+        self.embedding.apply(self.init_weights)
 
     def forward(self, input_ids: torch.Tensor) -> torch.Tensor:
         """Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.nn.embeddings.embedding.html."""
