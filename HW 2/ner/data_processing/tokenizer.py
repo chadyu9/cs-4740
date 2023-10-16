@@ -122,7 +122,7 @@ class Tokenizer(object):
         truncation_side: str = "right",
     ) -> Dict[str, torch.Tensor]:
         """Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.data_processing.tokenizer.html."""
-        if type(input_seq) == str:
+        if type(input_seq) is str:
             input_seq = input_seq.split()
 
         padded_tokens = []
