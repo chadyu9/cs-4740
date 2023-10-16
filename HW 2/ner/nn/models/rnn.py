@@ -31,19 +31,31 @@ class RNN(Module):
 
         nonlinearity_dict = {"tanh": nn.Tanh(), "relu": nn.ReLU(), "prelu": nn.PReLU()}
         if nonlinearity not in nonlinearity_dict:
-            raise ValueError(f"{nonlinearity} not supported, choose one of: [tanh, relu, prelu]")
+            raise ValueError(
+                f"{nonlinearity} not supported, choose one of: [tanh, relu, prelu]"
+            )
         self.nonlinear = nonlinearity_dict[nonlinearity]
 
-        # TODO-5-1
-        raise NotImplementedError  # remove once the method is filled
+        self.W_list = nn.ModuleList(
+            nn.Linear(embedding_dim, hidden_dim, bias=bias) for _ in range(num_layers)
+        )
+        self.U_list = nn.ModuleList(
+            nn.Linear(hidden_dim, hidden_dim, bias=bias) for _ in range(num_layers)
+        )
+        self.V = nn.Linear(hidden_dim, output_dim, bias=bias)
 
         self.apply(self.init_weights)
 
     def _initial_hidden_states(
-        self, batch_size: int, init_zeros: bool = False, device: torch.device = torch.device("cpu")
+        self,
+        batch_size: int,
+        init_zeros: bool = False,
+        device: torch.device = torch.device("cpu"),
     ) -> List[torch.Tensor]:
         if init_zeros:
-            hidden_states = torch.zeros(self.num_layers, batch_size, self.hidden_dim, device=device)
+            hidden_states = torch.zeros(
+                self.num_layers, batch_size, self.hidden_dim, device=device
+            )
         else:
             hidden_states = nn.init.xavier_normal_(
                 torch.empty(self.num_layers, batch_size, self.hidden_dim, device=device)
@@ -52,5 +64,20 @@ class RNN(Module):
 
     def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
         """Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.nn.models.rnn.html."""
-        # TODO-5-2
-        raise NotImplementedError  # remove once the method is filled
+        hidden_states = self._initial_hidden_states(
+            batch_size=embeddings.shape[0], device=embeddings.device
+        )
+        outputs = []
+
+        for t in range(embeddings.shape[1]):
+            input_k = embeddings[:, t, :]
+
+            for k in range(self.num_layers):
+                hidden_states[k] = self.nonlinear(
+                    self.W_list[k](input_k) + self.U_list[k](hidden_states[k])
+                )
+                input_k = hidden_states[k]
+            output_t = self.V(input_k)
+            outputs.append(output_t.reshape([output_t.shape[0], 1, output_t.shape[1]]))
+
+        return torch.cat(outputs, dim=1)

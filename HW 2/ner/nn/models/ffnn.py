@@ -18,7 +18,7 @@ class FFNN(Module):
 
         # Setting up the transitions between layers
         self.W = nn.Linear(embedding_dim, hidden_dim)
-        self.V = nn.Linear(hidden_dim, output_dim, bias=False)
+        self.V = nn.Linear(hidden_dim, output_dim)
         self.hid_to_hid = nn.ModuleList(
             [nn.Linear(hidden_dim, hidden_dim) for _ in range(num_layers - 1)]
         )
