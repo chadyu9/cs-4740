@@ -37,8 +37,10 @@ class RNN(Module):
         self.nonlinear = nonlinearity_dict[nonlinearity]
 
         self.W_list = nn.ModuleList(
-            nn.Linear(embedding_dim, hidden_dim, bias=bias) for _ in range(num_layers)
+            nn.Linear(hidden_dim, hidden_dim, bias=bias) for _ in range(num_layers - 1)
         )
+        self.W_list.insert(0, nn.Linear(embedding_dim, hidden_dim, bias=bias))
+
         self.U_list = nn.ModuleList(
             nn.Linear(hidden_dim, hidden_dim, bias=bias) for _ in range(num_layers)
         )
