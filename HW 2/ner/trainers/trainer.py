@@ -97,6 +97,7 @@ class Trainer(object):
 
     def _train_epoch(self, dataloader) -> Dict[str, float]:
         """Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.trainers.trainer.html."""
+        # Initialize metrics dictionary
         metrics = {
             "loss": [],
             "precision": [],
@@ -106,23 +107,31 @@ class Trainer(object):
             "entity_f1": [],
         }
 
+        # Set model to train mode
         self.model.train()
 
+        # Iterate through batches
         for batch in dataloader:
+            # Zero out gradients
             self.optimizer.zero_grad()
 
+            # Run forward pass, compute loss, and backpropagate
             input_ids = batch["input_ids"].to(self.device)
             preds = self.model(input_ids)
             loss = compute_loss(self.loss_fn, preds, batch["labels"].to(self.device))
             loss.backward()
             loss = loss.item()
 
+            # Clip gradients if indicated
             if self.grad_clip_max_norm:
                 nn.utils.clip_grad_norm_(
                     self.model.parameters(), self.grad_clip_max_norm
                 )
+
+            # Update parameters
             self.optimizer.step()
 
+            # Compute and compile the metrics
             batch_metrics = compute_metrics(
                 preds=preds,
                 labels=batch["labels"],
@@ -136,7 +145,7 @@ class Trainer(object):
                     key
                 ].append(loss)
 
-        print(metrics)
+        # Return the average metrics
         average_metrics = {
             metric: np.average(score) for metric, score in metrics.items()
         }
@@ -145,6 +154,7 @@ class Trainer(object):
     @torch.no_grad()
     def _eval_epoch(self, dataloader) -> Dict[str, float]:
         """Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.trainers.trainer.html."""
+        # Initialize metrics dictionary
         metrics = {
             "loss": [],
             "precision": [],
@@ -154,14 +164,18 @@ class Trainer(object):
             "entity_f1": [],
         }
 
+        # Set model to eval mode
         self.model.eval()
 
+        # Iterate through batches
         for batch in dataloader:
+            # Run forward pass and compute loss
             input_ids = batch["input_ids"].to(self.device)
             preds = self.model(input_ids)
             loss = compute_loss(self.loss_fn, preds, batch["labels"].to(self.device))
             loss = loss.item()
 
+            # Compute and compile the metrics
             batch_metrics = compute_metrics(
                 preds=preds,
                 labels=batch["labels"],
@@ -175,6 +189,7 @@ class Trainer(object):
                     key
                 ].append(loss)
 
+        # Return the average metrics
         average_metrics = {
             metric: np.average(score) for metric, score in metrics.items()
         }

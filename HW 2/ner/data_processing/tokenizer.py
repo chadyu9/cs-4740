@@ -122,11 +122,13 @@ class Tokenizer(object):
         truncation_side: str = "right",
     ) -> Dict[str, torch.Tensor]:
         """Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.data_processing.tokenizer.html."""
+        # Convert input sequence to list of tokens if it is a string
         if type(input_seq) is str:
             input_seq = input_seq.split()
 
         padded_tokens = []
 
+        # Handle truncation
         if truncation_side == "left":
             padded_tokens += input_seq[
                 max(
@@ -141,6 +143,7 @@ class Tokenizer(object):
                 or None
             ]
 
+        # Handle padding
         if padding_side == "left":
             padded_tokens = [self.pad_token] * max(
                 (max_length if max_length else len(input_seq)) - len(input_seq), 0
@@ -150,6 +153,7 @@ class Tokenizer(object):
                 (max_length if max_length else len(input_seq)) - len(input_seq), 0
             )
 
+        # Convert tokens to input ids
         input_ids = torch.LongTensor(
             [
                 self.token2id.get(token, self.token2id[self.unk_token])
@@ -157,6 +161,7 @@ class Tokenizer(object):
             ]
         )
 
+        # Create padding mask
         padding_mask = torch.where(input_ids == 0, 1, 0)
 
         return {

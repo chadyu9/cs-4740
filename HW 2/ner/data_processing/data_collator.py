@@ -63,6 +63,7 @@ class DataCollator(object):
         """
         Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.data_processing.data_collator.html.
         """
+        # Initialize batch dimensions
         batch_size = len(data_instances)
         batch_max_length = (
             self._get_max_length(data_instances)
@@ -70,10 +71,12 @@ class DataCollator(object):
             else len(data_instances[0][self.text_colname])
         )
 
+        # Initialize padded batch
         padded_batch = {}
         input_ids = torch.empty((batch_size, batch_max_length), dtype=torch.long)
         padding_mask = torch.empty((batch_size, batch_max_length), dtype=torch.long)
 
+        # Compile tokenized sequences
         for i in range(len(data_instances)):
             tokenized_seq = self.tokenizer.tokenize(
                 data_instances[i][self.text_colname],
@@ -87,10 +90,12 @@ class DataCollator(object):
         padded_batch["input_ids"] = input_ids
         padded_batch["padding_mask"] = padding_mask
 
+        # If labels are provided, compile padded labels
         if self.label_colname in data_instances[0]:
             labels = torch.empty((batch_size, batch_max_length), dtype=torch.long)
             for i in range(len(data_instances)):
                 non_padded_labels = data_instances[i][self.label_colname]
+                # Handle truncation
                 if self.truncation_side == "left":
                     non_padded_labels = non_padded_labels[
                         max(
@@ -107,12 +112,14 @@ class DataCollator(object):
                         or None
                     ]
 
+                # Handle padding
                 pad_length = torch.sum(padding_mask[i]).item()
                 if self.padding_side == "left":
                     non_padded_labels = [self.pad_tag] * pad_length + non_padded_labels
                 else:
                     non_padded_labels += [self.pad_tag] * pad_length
 
+                # Process labels into tensors with associated integer encoding
                 labels[i] = self._process_labels(non_padded_labels)
 
             padded_batch["labels"] = labels

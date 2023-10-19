@@ -36,6 +36,7 @@ class RNN(Module):
             )
         self.nonlinear = nonlinearity_dict[nonlinearity]
 
+        # Setting up transitions between layers (W_1 is only one from embeeding to hidden)
         self.W_list = nn.ModuleList(
             nn.Linear(hidden_dim, hidden_dim, bias=bias) for _ in range(num_layers - 1)
         )
@@ -46,6 +47,7 @@ class RNN(Module):
         )
         self.V = nn.Linear(hidden_dim, output_dim, bias=bias)
 
+        # Initialize weights of RNN
         self.apply(self.init_weights)
 
     def _initial_hidden_states(
@@ -66,14 +68,18 @@ class RNN(Module):
 
     def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
         """Documentation: https://pages.github.coecis.cornell.edu/cs4740/hw2-fa23/ner.nn.models.rnn.html."""
+        # Initialize hidden states and list of output tensors
         hidden_states = self._initial_hidden_states(
             batch_size=embeddings.shape[0], device=embeddings.device
         )
         outputs = []
 
+        # Loop through time steps (batch max length)
         for t in range(embeddings.shape[1]):
+            # Get x_t, the input at time t
             input_k = embeddings[:, t, :]
 
+            # Pass through layers and update hidden states
             for k in range(self.num_layers):
                 hidden_states[k] = self.nonlinear(
                     self.W_list[k](input_k) + self.U_list[k](hidden_states[k])
