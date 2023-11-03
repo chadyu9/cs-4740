@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: srl
+Version: 1.0
+Summary: a library for semantic role labelling using neural networks
+Home-page: https://github.coecis.cornell.edu/cs4740/hw3-fa23
+Author: Vivian Nguyen, Sasha Boguraev, Han Xia, Travis Zhange, Vinh Nguyen, Sienna Hu, Gavin Fogel, Vivian Chen,  Benjamin Hu
+Author-email: ljl2@cornell.edu (Lillian Lee)
+Requires-Python: >=3.9

@@ -1,0 +1,51 @@
+%% authors: Tushaar Gangavarapu
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%-TG: tt font style: pcr, cmvtt, cmtt
+\renewcommand\ttdefault{cmvtt}
+
+%-TG: tt font < and > symbols
+\newcommand{\lt}{\scalebox{.7}[1.0]{<}}
+\newcommand{\gt}{\scalebox{.7}[1.0]{>}}
+
+%-TG: assignment header (assignment number, title, due date)
+\setlength\parindent{0in}
+\addtolength\parskip{1ex}
+\setlength\fboxrule{.4mm}\setlength{\fboxsep}{1.75mm}
+\newlength\header
+\header=\textwidth
+\addtolength\header{-4.35mm}
+\parindent=0pt
+\parskip=1ex
+
+\newcommand{\hw}[3]{
+    \begin{center}
+    \framebox{\parbox\header{\normalsize 
+        CS~5740 Fa'23 HW#1\\ \hfill
+        \textbf{#2} \\[0.15em]
+         Due: TBD}}
+    \end{center}
+    \medskip
+}
+
+%-TG: net ID box
+\newcommand\netidbox{\fbox{\phantom{~TG352~}}}
+
+%-TG: color fix for multiline comments
+\makeatletter
+\long\def\@textcolor#1#2#3{\protect\leavevmode{\color#1{#2}#3}}
+\makeatother
+
+%-TG: including hints after questions
+\newcommand{\hint}[1]{{\it{Hint: #1}}}
+
+%-TG: question
+\newcommand{\question}[2]{\par\vspace{0.5cm}\textbf{#1.} #2}
+
+%-TG: answer
+\newcommand{\answer}[1]{\par\vspace{0.2cm}\textcolor{blue}{\textit{Answer}. #1}}
+
+%-TG: clarification (timestamp, clarification text)
+\newcommand{\clarification}[2]{\textcolor{orange}{\lbrack#1\rbrack\begin{quote}#2\end{quote}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -1,0 +1,10 @@
+README.md
+setup.py
+colab/__init__.py
+colab/file_utils.py
+colab/git_utils.py
+srl.egg-info/PKG-INFO
+srl.egg-info/SOURCES.txt
+srl.egg-info/dependency_links.txt
+srl.egg-info/requires.txt
+srl.egg-info/top_level.txt
