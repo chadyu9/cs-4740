@@ -36,7 +36,7 @@ class LSTMTagger(nn.Module):
             num_layers=num_layers,
             batch_first=True,
         )
-        self.linear = nn.Linear(in_features=hidden_dim, out_features=output_dim)
+        self.linear = nn.Linear(in_features=2 * hidden_dim, out_features=output_dim)
 
     def compute_Loss(self, criterion, predicted_vector, gold_label):
         """
@@ -77,7 +77,8 @@ class LSTMTagger(nn.Module):
         # TODO 5: Iterate over the time dimension:
         #       - Concatenate verb hidden state to the hidden layer output of every token
         #       - Predict SRL tag distribution with output layer and logsoftmax
-        out = torch.tensor((batch_size, time_steps, self.output_dim))
+        out = torch.zeros(batch_size, time_steps, self.output_dim)
+
         for i in range(batch_size):
             for t in range(time_steps):
                 combine = torch.cat((verbs[i], output[i, t, :]))
