@@ -72,18 +72,17 @@ class LSTMTagger(nn.Module):
         verbs = []
         for i in range(output.size(0)):
             batch = output[i, :, :]
-            verbs.append(batch[verb_indices[i]])
-
+            verbs.append(batch[verb_indices[i]]) #verbs = (b,h)
+        verbs = torch.stack(verbs, dim=0)
         # TODO 5: Iterate over the time dimension:
         #       - Concatenate verb hidden state to the hidden layer output of every token
         #       - Predict SRL tag distribution with output layer and logsoftmax
         out = torch.zeros(batch_size, time_steps, self.output_dim)
 
-        for i in range(batch_size):
-            for t in range(time_steps):
-                combine = torch.cat((verbs[i], output[i, t, :]))
-                res = self.linear(combine)
-                out[i, t, :] = F.log_softmax(res)
+        for t in range(time_steps):
+            combine = torch.cat((verbs, output[:, t, :]), dim=1)
+            res = self.linear(combine)
+            out[:, t, :] = F.log_softmax(res, dim=1)
 
         return out
 
