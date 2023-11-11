@@ -36,9 +36,15 @@ class Decoder(nn.Module):
         ###   You may find some of these functions useful:
         ###     LSTM Cell:
         ###     https://pytorch.org/docs/stable/generated/torch.nn.LSTMCell.html
-        self.decoder = nn.LSTMCell(input_size=embed_size + hidden_size, hidden_size=hidden_size, bias=True)
-        self.combined_output_projection = nn.Linear(in_features=3*hidden_size, out_features=hidden_size, bias=False)
-        self.target_vocab_projection = nn.Linear(in_features=hidden_size, out_features=self.output_vocab_size)
+        self.decoder = nn.LSTMCell(
+            input_size=embed_size + hidden_size, hidden_size=hidden_size, bias=True
+        )
+        self.combined_output_projection = nn.Linear(
+            in_features=3 * hidden_size, out_features=hidden_size, bias=False
+        )
+        self.target_vocab_projection = nn.Linear(
+            in_features=hidden_size, out_features=self.output_vocab_size
+        )
 
     def forward(
         self,
@@ -91,10 +97,10 @@ class Decoder(nn.Module):
         for t in range(Y.size(dim=1)):
             Y_t = torch.squeeze(Y[:, t, :], dim=1)
             Ybar_t = torch.cat((Y_t, o_prev), dim=-1)
-            dec_state, o_t = self.step(Ybar_t, dec_state, enc_hiddens, enc_hiddens_proj) 
+            dec_state, o_t = self.step(Ybar_t, dec_state, enc_hiddens, enc_hiddens_proj)
             combined_outputs.append(o_t)
             o_prev = o_t
-        combined_outputs = torch.stack(combined_outputs, dim=1) 
+        combined_outputs = torch.stack(combined_outputs, dim=1)
         return combined_outputs
 
     def step(
@@ -132,8 +138,12 @@ class Decoder(nn.Module):
         ###        and then take softmax (this is the attention weight alpha_t)
         ###     2. Dot product attention weight with enc_hiddens to get weighted context embedding a_t
         ###     3. U_t = Concatenate dec_hidden and a_t
-        alpha_t = F.softmax(torch.matmul(enc_hiddens_proj, dec_hidden.unsqueeze(dim=2)), dim=1) #alpha_t = (b, L, 1)
-        a_t = torch.matmul(torch.transpose(enc_hiddens, dim0=1, dim1=2), alpha_t) #a_t = (b, 2h, 1)
+        alpha_t = F.softmax(
+            torch.matmul(enc_hiddens_proj, dec_hidden.unsqueeze(dim=2)), dim=1
+        )  # alpha_t = (b, L, 1)
+        a_t = torch.matmul(
+            torch.transpose(enc_hiddens, dim0=1, dim1=2), alpha_t
+        )  # a_t = (b, 2h, 1)
         a_t = a_t.squeeze(dim=2)
         U_t = torch.cat((dec_hidden, a_t), dim=1)
         ### TODO 5:

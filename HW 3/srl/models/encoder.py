@@ -3,15 +3,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, Tuple
 
+
 class Encoder(nn.Module):
     """
     Encoder module for sequence-to-sequence models.
     """
-    
-    def __init__(self, 
-                 embed_size: int, 
-                 hidden_size: int, 
-                 source_embeddings: nn.Embedding) -> None:
+
+    def __init__(
+        self, embed_size: int, hidden_size: int, source_embeddings: nn.Embedding
+    ) -> None:
         super().__init__()
         self.hidden_size = hidden_size
         self.embed_size = embed_size
@@ -22,12 +22,23 @@ class Encoder(nn.Module):
         ###     self.h_projection (Linear Layer with bias),called W_{h} above.
         ###     self.c_projection (Linear Layer with bias),called W_{c} above.
         ### YOUR CODE HERE (~3 Lines)
-        self.encoder = nn.LSTM(input_size=embed_size, hidden_size=hidden_size, batch_first=True, bias=True, bidirectional=True)
-        self.h_projection = nn.Linear(in_features=2 * hidden_size, out_features=hidden_size, bias=True)
-        self.c_projection = nn.Linear(in_features=2 * hidden_size, out_features=hidden_size, bias=True)
-     
-    def forward(self, source_padded: torch.Tensor, source_lengths: List[int]) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+        self.encoder = nn.LSTM(
+            input_size=embed_size,
+            hidden_size=hidden_size,
+            batch_first=True,
+            bias=True,
+            bidirectional=True,
+        )
+        self.h_projection = nn.Linear(
+            in_features=2 * hidden_size, out_features=hidden_size, bias=True
+        )
+        self.c_projection = nn.Linear(
+            in_features=2 * hidden_size, out_features=hidden_size, bias=True
+        )
 
+    def forward(
+        self, source_padded: torch.Tensor, source_lengths: List[int]
+    ) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         ### GOAL:
         ###     1. Construct Tensor `X` by embedding the input. Note
         ###         that there is no initial hidden state or cell for the decoder.
@@ -48,23 +59,27 @@ class Encoder(nn.Module):
 
         ### YOUR CODE HERE
         enc_hiddens, dec_init_state = None, None
-        
-        #TODO 2 
+
+        # TODO 2
         X = self.embedding(source_padded)
         X = nn.utils.rnn.pack_padded_sequence(X, source_lengths, batch_first=True)
 
-        #TODO 3
+        # TODO 3
         enc_hiddens, (last_hidden, last_cell_state) = self.encoder(X)
-        (enc_hiddens, _) = nn.utils.rnn.pad_packed_sequence(enc_hiddens, batch_first=True)
+        (enc_hiddens, _) = nn.utils.rnn.pad_packed_sequence(
+            enc_hiddens, batch_first=True
+        )
 
-        #TODO 4 concatenate last hidden embed from both direction and with a linear projection 
+        # TODO 4 concatenate last hidden embed from both direction and with a linear projection
         before_hidden_projection = torch.cat((last_hidden[0], last_hidden[1]), dim=1)
         init_decoder_hidden = self.h_projection(before_hidden_projection)
 
-        #TODO 5 concatenate last cell state from both direction and with a linear projection 
-        before_cell_projection = torch.cat((last_cell_state[0], last_cell_state[1]), dim=1)
+        # TODO 5 concatenate last cell state from both direction and with a linear projection
+        before_cell_projection = torch.cat(
+            (last_cell_state[0], last_cell_state[1]), dim=1
+        )
         init_cell_state = self.c_projection(before_cell_projection)
-        
+
         dec_init_state = (init_decoder_hidden, init_cell_state)
 
         return enc_hiddens, dec_init_state
