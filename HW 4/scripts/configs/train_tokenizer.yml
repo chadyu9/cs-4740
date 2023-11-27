@@ -1,0 +1,12 @@
+init:
+  name: "seagull-bbpe"
+  lowercase: False
+  punct_behavior: "contiguous"
+  special_tokens: null
+
+train:
+  num_merges: 33000
+  min_freq: 2
+  text_colname: "text"
+  batch_size: 4000
+  divisible_by_eight: True

@@ -1,0 +1,60 @@
+general:
+  device: "auto"
+
+model:
+  embedding_dim: 768
+  num_layers: 12
+  num_heads: 12
+  intermediate_dim: 2048
+  max_positions: 128
+  dropout_proba: 0.1
+  attn_dropout_proba: 0.1
+  use_rope: True
+  ffn_activation: "swish"
+  ffn_bias: False
+  layer_norm_embedding: False
+  base: 10000
+  causal: True
+  layer_norm_mode: "pre"
+  layer_norm_type: "rms"
+  weight_tying: True
+
+optimizer:
+  pretraining:
+    betas: [ 0.9, 0.95 ]
+    weight_decay: 0.1
+    eps: 1.0e-5
+  finetuning:
+    betas: [ 0.9, 0.999 ]
+    weight_decay: 0.01
+    eps: 1.0e-8
+
+lr_scheduler:
+  pretraining:
+    num_warmup_steps: 2000
+    annealing_period: 60000
+    warmup_init_lr: 2.0e-5
+    max_lr: 6.0e-4
+    min_lr: 6.0e-5
+    lr_shrink_factor: 0.1
+  finetuning:
+    annealing_period: 10000
+    max_lr: 1.0e-5
+    min_lr: 1.0e-6
+    lr_shrink_factor: 0.1
+
+trainer:
+  pretraining:
+    grad_clip_max_norm: 1.0
+    seq_start_pos: null
+    use_amp: True
+    compile_model: True
+  finetuning:
+    grad_clip_max_norm: 1.0
+    seq_start_pos: -1
+    use_amp: True
+    compile_model: True
+
+train_and_eval:
+  checkpoint_every: 1
+  num_workers: 4

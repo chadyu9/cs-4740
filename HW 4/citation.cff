@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Gangavarapu"
+  given-names: "Tushaar"
+- family-names: "Key"
+  given-names: "Darren"
+- family-names: "Kraver"
+  given-names: "Logan"
+- family-names: "Tan"
+  given-names: "Lionel"
+- family-names: "Chaixanien"
+  given-names: "Pun"
+- family-names: "Horstmann"
+  given-names: "Kai"
+- family-names: "Jung"
+  given-names: "Dave"
+- family-names: "Uppuluri"
+  given-names: "Aaishi"
+title: "[CS 4740 Fa'23 HW4] Hush, the seagulls are purring: On generating humorous captions from scene descriptions"
+version: 1.0
+date-released: 2023-11-08
+url: "https://github.coecis.cornell.edu/cs4740/hw4-fa23"
