@@ -97,13 +97,14 @@ class TransformerLayer(Module):
             use_kv_cache=use_kv_cache,
         )
         mha_output = self.maybe_apply_layer_norm(
-            tensor=mha_output, current_layer_norm_application="post"
+            tensor=input_embeddings + mha_output, current_layer_norm_application="post"
         )
 
         # Apply the FFN layer and pre/post norm as needed.
         return (
             self.maybe_apply_layer_norm(
-                tensor=self.ffn(
+                tensor=mha_output
+                + self.ffn(
                     self.maybe_apply_layer_norm(
                         tensor=mha_output, current_layer_norm_application="pre"
                     )

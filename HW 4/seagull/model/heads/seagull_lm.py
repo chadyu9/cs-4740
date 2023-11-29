@@ -78,8 +78,6 @@ class SeagullLM(Module):
 
         # Separate transformer layer outputs as necessary and compute logits.
         all_outputs = seagull_output[0] if return_attentions else seagull_output
-        print(all_outputs[-1].size())
-        print(torch.t(self.seagull.embedding.token_embedding.weight.data).size())
         logits = (
             torch.matmul(
                 all_outputs[-1],
