@@ -13,6 +13,7 @@ from seagull.data_processing.bbpe import BBPETokenizer
 from seagull.data_processing.constants import END_OF_CAPTION_TOKEN
 from seagull.model.heads.seagull_lm import SeagullLM
 from seagull.utils.torch_utils import set_pytorch_backends, set_seed, get_device
+from seagull.utils.utils import colored
 
 set_pytorch_backends()
 
@@ -196,9 +197,21 @@ def main(
             top_k=top_k,
             is_leaderboard_submission=is_leaderboard_submission,
         )
-    shutil.make_archive(basepath_to_store_submission, "zip", basepath_to_store_submission)
-    shutil.rmtree(basepath_to_store_submission)
-    print(f"submission stored at: {basepath_to_store_submission}.zip")
+    if is_leaderboard_submission or is_milestone_submission:
+        shutil.make_archive(basepath_to_store_submission, "zip", basepath_to_store_submission)
+        shutil.rmtree(basepath_to_store_submission)
+        print(f"submission stored at: {basepath_to_store_submission}.zip")
+    else:
+        # For final submission, create two .zip files:
+        code_path = os.path.join(basepath_to_store_submission, all_output_paths["seagull_outputs_path"])
+        shutil.make_archive(code_path, "zip", code_path)
+        shutil.rmtree(code_path)
+        print(f"CODE submission {colored('(to Gradescope)', 'red')} stored at: {code_path}.zip")
+
+        model_path = os.path.join(basepath_to_store_submission, all_output_paths["model_outputs_path"])
+        shutil.make_archive(model_path, "zip", model_path)
+        shutil.rmtree(model_path)
+        print(f"MODEL submission {colored('(to CMS)', 'red')} stored at: {model_path}.zip")
 
 
 def argparser():
